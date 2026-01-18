@@ -1,31 +1,22 @@
-import "./Expenses/Expenses";
-import './App.css';
-import ExpenseItem from "./ExpenseItem";
+import "../src/App.css";
+import NewExpense from "./Newexpenses/NewExpense";
+import Expenses from "./Expenses/Expenses";
 
 function App() {
-    const expenses = [
-        {
-            date: new Date(2023, 0, 10),
-            title:'Pitsa',
-            price: 12.99
-        },
-        {
-            date: new Date(2023, 0, 5),
-            title:'Kartul',
-            price: 3.99
-        },
-        {
-            date: new Date(2023, 0, 1),
-            title:'Soda',
-            price: 1.99
-        }
-    ]
+  const expenses = [
+    { id: 'e1', date: new Date(2023, 0, 10), title: 'Pitsa', price: 12.99 },
+    { id: 'e2', date: new Date(2023, 0, 5), title: 'Kartul', price: 3.99 },
+    { id: 'e3', date: new Date(2023, 0, 1), title: 'Soda', price: 1.99 }
+  ];
+
+  const addExpenseHandler = (expense) => {
+    console.log("Uus kulu:", expense);
+  };
 
   return (
     <div className="App">
-      <ExpenseItem expenseData={expenses[0]}></ExpenseItem>
-      <ExpenseItem expenseData={expenses[1]}></ExpenseItem>
-      <ExpenseItem expenseData={expenses[2]}></ExpenseItem>
+      <NewExpense onAddExpense={addExpenseHandler} />
+      <Expenses items={expenses} />
     </div>
   );
 }
