@@ -1,72 +1,101 @@
-import React, { useState } from 'react';
-import './ExpenseForm.css';
+import React, { useState, useRef, Fragment } from "react";
+import Card from "../UI/Card";
+import Button from "../UI/Button";
+import Error from "../UI/Error";
+import "./ExpenseForm.css";
 
 const ExpenseForm = (props) => {
-  const [enteredTitle, setEnteredTitle] = useState('');
-  const [enteredAmount, setEnteredAmount] = useState('');
-  const [enteredDate, setEnteredDate] = useState('');
+  // useRef konksud andmete lugemiseks otse sisendväljadest
+  const titleInputRef = useRef();
+  const amountInputRef = useRef();
+  const dateInputRef = useRef();
 
-  const titleChangeHandler = (event) => setEnteredTitle(event.target.value);
-  const amountChangeHandler = (event) => setEnteredAmount(event.target.value);
-  const dateChangeHandler = (event) => setEnteredDate(event.target.value);
+  // useState veateadete haldamiseks
+  const [error, setError] = useState();
 
   const submitHandler = (event) => {
     event.preventDefault();
 
+    const enteredTitle = titleInputRef.current.value;
+    const enteredAmount = amountInputRef.current.value;
+    const enteredDate = dateInputRef.current.value;
+
+    // 1. Kontroll, et väljad poleks tühjad
+    if (
+      enteredTitle.trim().length === 0 ||
+      enteredAmount.trim().length === 0 ||
+      enteredDate.trim().length === 0
+    ) {
+      setError({
+        title: "Vigane sisestus",
+        message: "Palun täida kõik väljad!",
+      });
+      return;
+    }
+
+    // 2. Kontroll, et summa oleks positiivne
+    if (+enteredAmount < 0.01) {
+      setError({
+        title: "Vigane summa",
+        message: "Summa peab olema suurem kui 0!",
+      });
+      return;
+    }
+
+    // 3. Andmete ettevalmistamine backendile (JSON-sõbralik formaat)
+    // Muudame kuupäeva tekstiks (YYYY-MM-DD), et see sobiks JSON faili
     const expenseData = {
       title: enteredTitle,
-      price: +enteredAmount, // Muudan numbriks
-      date: new Date(enteredDate),
+      price: +enteredAmount,
+      date: new Date(enteredDate).toISOString().split("T")[0],
     };
 
+    // Saadame andmed üles NewExpense -> App.jsx poole
     props.onSaveExpenseData(expenseData);
-    
-    // vormi tühjenuds
-    setEnteredTitle('');
-    setEnteredAmount('');
-    setEnteredDate('');
+
+    // Tühjendame väljad
+    titleInputRef.current.value = "";
+    amountInputRef.current.value = "";
+    dateInputRef.current.value = "";
+  };
+
+  const errorHandler = () => {
+    setError(null);
   };
 
   return (
-    <form onSubmit={submitHandler}>
-      <div className='new-expense__controls'>
-        <div className='new-expense__control'>
-          <label>Title</label>
-          <input 
-            type='text' 
-            value={enteredTitle} 
-            onChange={titleChangeHandler} 
-            required 
-          />
+    <Fragment>
+      {error && (
+        <Error
+          title={error.title}
+          message={error.message}
+          onConfirm={errorHandler}
+        />
+      )}
+      <form onSubmit={submitHandler}>
+        <div className="new-expense__controls">
+          <div className="new-expense__control">
+            <label>Kulu nimetus</label>
+            <input type="text" ref={titleInputRef} />
+          </div>
+          <div className="new-expense__control">
+            <label>Summa</label>
+            <input type="number" step="0.01" ref={amountInputRef} />
+          </div>
+          <div className="new-expense__control">
+            <label>Kuupäev</label>
+            <input type="date" ref={dateInputRef} />
+          </div>
         </div>
-        <div className='new-expense__control'>
-          <label>Amount</label>
-          <input 
-            type='number' 
-            min='0.01' 
-            step='0.01' 
-            value={enteredAmount} 
-            onChange={amountChangeHandler} 
-            required 
-          />
+        <div className="new-expense__actions">
+          {/* props.onCancel lubab vormi sulgeda, kui see on vastavalt seadistatud */}
+          <button type="button" onClick={props.onCancel}>
+            Tühista
+          </button>
+          <button type="submit">Lisa kulu</button>
         </div>
-        <div className='new-expense__control'>
-          <label>Date</label>
-          <input 
-            type='date' 
-            min='2023-01-01' 
-            max='2026-12-31' 
-            value={enteredDate} 
-            onChange={dateChangeHandler} 
-            required 
-          />
-        </div>
-      </div>
-      <div className='new-expense__actions'>
-        <button type='button' onClick={props.onCancel}>Cancel</button>
-        <button type='submit'>Add Expense</button>
-      </div>
-    </form>
+      </form>
+    </Fragment>
   );
 };
 

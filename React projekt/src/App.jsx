@@ -1,30 +1,95 @@
-import React, { useState } from "react";
-import "./App.css";
+import React, { useState, useEffect, useCallback } from "react";
 import NewExpense from "./Newexpenses/NewExpense";
 import Expenses from "./Expenses/Expenses";
-
-const DUMMY_EXPENSES = [
-  { id: 'e1', date: new Date(2023, 0, 10), title: 'Pitsa', price: 12.99 },
-  { id: 'e2', date: new Date(2024, 5, 5), title: 'Kartul', price: 3.99 },
-  { id: 'e3', date: new Date(2025, 11, 1), title: 'Soda', price: 1.99 },
-  { id: 'e4', date: new Date(2023, 8, 15), title: 'Kino', price: 9.50 }
-];
+import Error from "./UI/Error";
 
 function App() {
-  // useState
-  const [expenses, setExpenses] = useState(DUMMY_EXPENSES);
+  const [expenses, setExpenses] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const addExpenseHandler = (expense) => {
-    setExpenses((prevExpenses) => {
-      return [expense, ...prevExpenses];
-    });
-    console.log("Uus kulu lisatud:", expense);
+  // FUNKTSIOON ANDMETE PÄRIMISEKS (GET)
+  const fetchExpensesHandler = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch("http://localhost:3001/expenses");
+      
+      if (!response.ok) {
+        throw new Error("Andmete pärimine ebaõnnestus!");
+      }
+
+      const data = await response.json();
+
+      // Kuna JSON-is on kuupäev tekst, muudame selle Date objektiks
+      const loadedExpenses = data.map((expense) => ({
+        ...expense,
+        date: new Date(expense.date),
+      }));
+
+      setExpenses(loadedExpenses);
+    } catch (err) {
+      setError({
+        title: "Viga laadimisel",
+        message: err.message || "Serveriga ei saadud ühendust.",
+      });
+    }
+    setIsLoading(false);
+  }, []);
+
+  // Käivitan laadimise kohe, kui äpp avatakse
+  useEffect(() => {
+    fetchExpensesHandler();
+  }, [fetchExpensesHandler]);
+
+  // 2. FUNKTSIOON UUE KULU LISAMISEKS (POST)
+  const addExpenseHandler = async (expense) => {
+    setError(null);
+    try {
+      const response = await fetch("http://localhost:3001/expenses", {
+        method: "POST",
+        body: JSON.stringify(expense),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Kulu salvestamine serverisse ebaõnnestus!");
+      }
+
+      // Kui serveris salvestamine õnnestus, uuendame vaadet
+      setExpenses((prevExpenses) => [
+        { ...expense, date: new Date(expense.date) },
+        ...prevExpenses,
+      ]);
+    } catch (err) {
+      setError({
+        title: "Salvestamise viga",
+        message: err.message,
+      });
+    }
+  };
+
+  const errorHandler = () => {
+    setError(null);
   };
 
   return (
     <div className="App">
+      {error && (
+        <Error
+          title={error.title}
+          message={error.message}
+          onConfirm={errorHandler}
+        />
+      )}
+      
       <NewExpense onAddExpense={addExpenseHandler} />
-      <Expenses items={expenses} />
+      
+      {isLoading && <p style={{ textAlign: "center", color: "white" }}>Laadin andmeid...</p>}
+      
+      {!isLoading && <Expenses items={expenses} />}
     </div>
   );
 }
