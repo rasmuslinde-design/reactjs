@@ -1,32 +1,39 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Fragment } from "react";
 import NewExpense from "./Newexpenses/NewExpense";
 import Expenses from "./Expenses/Expenses";
 import Error from "./UI/Error";
+import Login from "./components/Login/Login";
+import MainHeader from "../src/components/MainHeader/Mainheader";
 
 function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [expenses, setExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // FUNKTSIOON ANDMETE PÄRIMISEKS (GET)
+  
+  useEffect(() => {
+    const storedUserLoggedInInformation = localStorage.getItem("isLoggedIn");
+
+    if (storedUserLoggedInInformation === "1") {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  
   const fetchExpensesHandler = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch("http://localhost:3001/expenses");
-      
       if (!response.ok) {
         throw new Error("Andmete pärimine ebaõnnestus!");
       }
-
       const data = await response.json();
-
-      // Kuna JSON-is on kuupäev tekst, muudame selle Date objektiks
       const loadedExpenses = data.map((expense) => ({
         ...expense,
         date: new Date(expense.date),
       }));
-
       setExpenses(loadedExpenses);
     } catch (err) {
       setError({
@@ -37,12 +44,22 @@ function App() {
     setIsLoading(false);
   }, []);
 
-  // Käivitan laadimise kohe, kui äpp avatakse
   useEffect(() => {
-    fetchExpensesHandler();
-  }, [fetchExpensesHandler]);
+    if (isLoggedIn) {
+      fetchExpensesHandler();
+    }
+  }, [isLoggedIn, fetchExpensesHandler]);
 
-  // 2. FUNKTSIOON UUE KULU LISAMISEKS (POST)
+  const loginHandler = (email, password) => {
+    localStorage.setItem("isLoggedIn", "1");
+    setIsLoggedIn(true);
+  };
+
+  const logoutHandler = () => {
+    localStorage.removeItem("isLoggedIn");
+    setIsLoggedIn(false);
+  };
+
   const addExpenseHandler = async (expense) => {
     setError(null);
     try {
@@ -53,12 +70,9 @@ function App() {
           "Content-Type": "application/json",
         },
       });
-
       if (!response.ok) {
         throw new Error("Kulu salvestamine serverisse ebaõnnestus!");
       }
-
-      // Kui serveris salvestamine õnnestus, uuendame vaadet
       setExpenses((prevExpenses) => [
         { ...expense, date: new Date(expense.date) },
         ...prevExpenses,
@@ -76,21 +90,30 @@ function App() {
   };
 
   return (
-    <div className="App">
-      {error && (
-        <Error
-          title={error.title}
-          message={error.message}
-          onConfirm={errorHandler}
-        />
-      )}
+    <Fragment>
+      {/* Päis on alati olemas, aga sisu muutub isLoggedIn põhjal */}
+      <MainHeader isAuthenticated={isLoggedIn} onLogout={logoutHandler} />
       
-      <NewExpense onAddExpense={addExpenseHandler} />
-      
-      {isLoading && <p style={{ textAlign: "center", color: "white" }}>Laadin andmeid...</p>}
-      
-      {!isLoading && <Expenses items={expenses} />}
-    </div>
+      <main>
+        {error && (
+          <Error
+            title={error.title}
+            message={error.message}
+            onConfirm={errorHandler}
+          />
+        )}
+
+        {!isLoggedIn && <Login onLogin={loginHandler} />}
+
+        {isLoggedIn && (
+          <Fragment>
+            <NewExpense onAddExpense={addExpenseHandler} />
+            {isLoading && <p style={{ textAlign: "center", color: "white" }}>Laadin andmeid...</p>}
+            {!isLoading && <Expenses items={expenses} />}
+          </Fragment>
+        )}
+      </main>
+    </Fragment>
   );
 }
 
