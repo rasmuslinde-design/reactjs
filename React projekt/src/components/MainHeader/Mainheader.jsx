@@ -1,15 +1,15 @@
-import React from "react";
+import React, { useContext } from "react";
 import Navigation from "./Navigation";
 import "./MainHeader.css";
+import AuthContext from "../../store/auth-context";
 
-const MainHeader = (props) => {
+const MainHeader = () => {
+  const authCtx = useContext(AuthContext);
+
   return (
     <header className="main-header">
       <h1>Kulude Arvestaja</h1>
-      <Navigation
-        isLoggedIn={props.isAuthenticated}
-        onLogout={props.onLogout}
-      />
+      <Navigation isLoggedIn={authCtx.isLoggedIn} onLogout={authCtx.onLogout} />
     </header>
   );
 };

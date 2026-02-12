@@ -4,6 +4,7 @@ import Expenses from "./Expenses/Expenses";
 import Error from "./UI/Error";
 import Login from "./components/Login/Login";
 import MainHeader from "./components/MainHeader/Mainheader";
+import AuthContext from "./store/auth-context";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -52,7 +53,7 @@ function App() {
   }, [isLoggedIn, fetchExpensesHandler]);
 
   // 3. LOGIMISE JA VÄLJALOGIMISE HALDUS
-  const loginHandler = (email, password) => {
+  const loginHandler = () => {
     // Salvestame brauserisse märke, et oleme sees
     localStorage.setItem("isLoggedIn", "1");
     setIsLoggedIn(true);
@@ -95,32 +96,40 @@ function App() {
   };
 
   return (
-    <Fragment>
-      {/* MainHeader peab saama isAuthenticated propsi, et Navigation teaks nuppe näidata */}
-      <MainHeader isAuthenticated={isLoggedIn} onLogout={logoutHandler} />
-      
-      <main>
-        {error && (
-          <Error
-            title={error.title}
-            message={error.message}
-            onConfirm={errorHandler}
-          />
-        )}
+    <AuthContext.Provider
+      value={{ isLoggedIn: isLoggedIn, onLogout: logoutHandler }}
+    >
+      <Fragment>
+        {/* MainHeader now reads auth state from context */}
+        <MainHeader />
 
-        {/* Kui pole sisse logitud, näita Login vormi (nüüd useReduceriga) */}
-        {!isLoggedIn && <Login onLogin={loginHandler} />}
+        <main>
+          {error && (
+            <Error
+              title={error.title}
+              message={error.message}
+              onConfirm={errorHandler}
+            />
+          )}
 
-        {/* Kui on sisse logitud, näita äpi põhiosa */}
-        {isLoggedIn && (
-          <Fragment>
-            <NewExpense onAddExpense={addExpenseHandler} />
-            {isLoading && <p style={{ textAlign: "center", color: "white" }}>Laadin andmeid...</p>}
-            {!isLoading && <Expenses items={expenses} />}
-          </Fragment>
-        )}
-      </main>
-    </Fragment>
+          {/* Kui pole sisse logitud, näita Login vormi (nüüd useReduceriga) */}
+          {!isLoggedIn && <Login onLogin={loginHandler} />}
+
+          {/* Kui on sisse logitud, näita äpi põhiosa */}
+          {isLoggedIn && (
+            <Fragment>
+              <NewExpense onAddExpense={addExpenseHandler} />
+              {isLoading && (
+                <p style={{ textAlign: "center", color: "white" }}>
+                  Laadin andmeid...
+                </p>
+              )}
+              {!isLoading && <Expenses items={expenses} />}
+            </Fragment>
+          )}
+        </main>
+      </Fragment>
+    </AuthContext.Provider>
   );
 }
 
