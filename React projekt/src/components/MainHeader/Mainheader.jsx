@@ -1,28 +1,17 @@
-import React from 'react';
-import './Navigation.css';
+import React from "react";
+import Navigation from "./Navigation";
+import "./MainHeader.css";
 
-const Navigation = (props) => {
+const MainHeader = (props) => {
   return (
-    <nav className="nav">
-      <ul>
-        {props.isLoggedIn && (
-          <li>
-            <a href="/">Kasutajad</a>
-          </li>
-        )}
-        {props.isLoggedIn && (
-          <li>
-            <a href="/">Seaded</a>
-          </li>
-        )}
-        {props.isLoggedIn && (
-          <li>
-            <button onClick={props.onLogout}>Välju</button>
-          </li>
-        )}
-      </ul>
-    </nav>
+    <header className="main-header">
+      <h1>Kulude Arvestaja</h1>
+      <Navigation
+        isLoggedIn={props.isAuthenticated}
+        onLogout={props.onLogout}
+      />
+    </header>
   );
 };
 
-export default Navigation;
+export default MainHeader;

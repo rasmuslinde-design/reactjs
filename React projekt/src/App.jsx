@@ -3,7 +3,7 @@ import NewExpense from "./Newexpenses/NewExpense";
 import Expenses from "./Expenses/Expenses";
 import Error from "./UI/Error";
 import Login from "./components/Login/Login";
-import MainHeader from "../src/components/MainHeader/Mainheader";
+import MainHeader from "./components/MainHeader/Mainheader";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -11,7 +11,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  
+  // 1. KONTROLLIME LOCALSTORAGE-IT (Käivitub üks kord äpi alguses)
   useEffect(() => {
     const storedUserLoggedInInformation = localStorage.getItem("isLoggedIn");
 
@@ -20,7 +20,7 @@ function App() {
     }
   }, []);
 
-  
+  // 2. FUNKTSIOON ANDMETE PÄRIMISEKS (GET)
   const fetchExpensesHandler = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -44,22 +44,27 @@ function App() {
     setIsLoading(false);
   }, []);
 
+  // Käivitame kulude laadimise ainult siis, kui kasutaja on sisse logitud
   useEffect(() => {
     if (isLoggedIn) {
       fetchExpensesHandler();
     }
   }, [isLoggedIn, fetchExpensesHandler]);
 
+  // 3. LOGIMISE JA VÄLJALOGIMISE HALDUS
   const loginHandler = (email, password) => {
+    // Salvestame brauserisse märke, et oleme sees
     localStorage.setItem("isLoggedIn", "1");
     setIsLoggedIn(true);
   };
 
   const logoutHandler = () => {
+    // Kustutame märke ja suuname sisselogimise ekraanile
     localStorage.removeItem("isLoggedIn");
     setIsLoggedIn(false);
   };
 
+  // 4. KULU LISAMISE HALDUS (POST)
   const addExpenseHandler = async (expense) => {
     setError(null);
     try {
@@ -91,7 +96,7 @@ function App() {
 
   return (
     <Fragment>
-      {/* Päis on alati olemas, aga sisu muutub isLoggedIn põhjal */}
+      {/* MainHeader peab saama isAuthenticated propsi, et Navigation teaks nuppe näidata */}
       <MainHeader isAuthenticated={isLoggedIn} onLogout={logoutHandler} />
       
       <main>
@@ -103,8 +108,10 @@ function App() {
           />
         )}
 
+        {/* Kui pole sisse logitud, näita Login vormi (nüüd useReduceriga) */}
         {!isLoggedIn && <Login onLogin={loginHandler} />}
 
+        {/* Kui on sisse logitud, näita äpi põhiosa */}
         {isLoggedIn && (
           <Fragment>
             <NewExpense onAddExpense={addExpenseHandler} />
