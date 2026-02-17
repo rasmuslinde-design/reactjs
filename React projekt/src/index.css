@@ -1,0 +1,55 @@
+:root {
+  --bg-color: #f7f7f7;
+  --card-bg: #ffffff;
+  --text-color: #000000;
+  --header-bg: #d500ff;
+  --input-bg: #ffffff;
+  --button-bg: #4f005f;
+}
+
+.dark {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --text-color: #e0e0e0;
+  --header-bg: #000000;
+  --input-bg: #2d2d2d;
+  --button-bg: #741188;
+}
+
+body,
+.light,
+.dark {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  min-height: 100vh;
+  margin: 0;
+  transition: all 0.3s ease;
+}
+
+.card,
+.expense-item,
+.login-card,
+.new-expense {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.26);
+}
+
+input,
+select {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid #555;
+}
+
+.main-header {
+  background-color: var(--header-bg) !important;
+}
+
+h1,
+h2,
+h3,
+label,
+p {
+  color: var(--text-color);
+}
